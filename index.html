@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)file:///C:/Users/italo/Downloads/TriumphoCapital.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Triumpho Capital</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root{
+    --bg:#0e0e0e;--surface:#1a1a1a;--surface2:#242424;--border:#2e2e2e;
+    --text:#f0f0f0;--muted:#555;--accent:#c8f060;--accent-dim:rgba(200,240,96,0.1);
+    --red:#ff5c5c;--blue:#5cadff;--amber:#ffb347;--purple:#b47fff;--teal:#47ffd4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+
+  /* ── Shared ── */
+  .sync-badge{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:border-color .2s}
+  .sync-badge:hover{border-color:var(--accent)}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+  .sync-dot.ok{background:#4caf50}
+  .sync-dot.err{background:var(--red)}
+  .sync-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .month-nav{display:flex;align-items:center;gap:8px}
+  .month-nav button{background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:15px;cursor:pointer;padding:5px 10px;border-radius:8px;line-height:1;transition:all .15s}
+  .month-nav button:hover{color:var(--text);border-color:var(--accent)}
+  .month-label{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);min-width:88px;text-align:center}
+
+  .total-label{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+  .total-value{font-family:'DM Mono',monospace;font-weight:500;color:var(--text);line-height:1}
+  .total-value span{color:var(--muted)}
+
+  .bars{display:flex;align-items:flex-end;gap:6px;padding-top:8px}
+  .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end}
+  .bar{width:100%;border-radius:4px 4px 0 0;min-height:3px;transition:height .3s ease}
+  .bar-label{font-size:9px;color:var(--muted);text-align:center}
+
+  .section-title{font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px}
+
+  .value-wrap{position:relative;margin-bottom:10px}
+  .value-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:15px;color:var(--muted);pointer-events:none;user-select:none}
+  .input-value{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px 12px 40px;color:var(--text);font-family:'DM Mono',monospace;font-size:20px;outline:none;transition:border-color .2s}
+  .input-value:focus{border-color:var(--accent)}
+  .input-value::placeholder{color:var(--muted);font-size:13px}
+  .input-desc{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s;margin-bottom:10px}
+  .input-desc:focus{border-color:var(--accent)}
+  .input-desc::placeholder{color:var(--muted)}
+  .cat-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .cat-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s}
+  .cat-btn.selected{border-color:var(--accent);background:var(--accent-dim)}
+  .cat-btn .icon{font-size:17px}
+  .cat-btn .label{font-size:10px;color:var(--muted);font-weight:500}
+  .cat-btn.selected .label{color:var(--accent)}
+  .add-btn{width:100%;background:var(--accent);color:#0e0e0e;border:none;border-radius:10px;padding:13px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s}
+  .add-btn:active{transform:scale(0.98)}
+  .add-btn:disabled{opacity:.3;cursor:not-allowed}
+
+  .entry{background:var(--surface);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;border:1px solid var(--border);animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .entry-icon{font-size:20px;width:38px;height:38px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .entry-info{flex:1;min-width:0}
+  .entry-cat{font-size:13px;font-weight:500;color:var(--text)}
+  .entry-desc{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .entry-right{text-align:right;flex-shrink:0}
+  .entry-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+  .entry-time{font-size:10px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace}
+  .entry-delete{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:color .2s;margin-left:4px;flex-shrink:0}
+  .entry-delete:hover{color:var(--red)}
+  .empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px;line-height:2}
+  .empty .big{font-size:36px;margin-bottom:10px}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#0e0e0e;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;transition:transform .3s;z-index:999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:26px;width:100%;max-width:420px}
+  .modal h2{font-size:16px;font-weight:500;margin-bottom:6px}
+  .modal p{font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:16px}
+  .modal input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;outline:none;margin-bottom:12px;transition:border-color .2s}
+  .modal input:focus{border-color:var(--accent)}
+  .modal input::placeholder{color:var(--muted)}
+  .modal-btn{width:100%;background:var(--accent);color:#0e0e0e;border:none;border-radius:10px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif}
+  .modal-skip{width:100%;background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:10px;padding:6px;font-family:'DM Sans',sans-serif}
+  .modal-skip:hover{color:var(--text)}
+
+  /* ══════════════════════════════════
+     MOBILE  (< 768px)
+  ══════════════════════════════════ */
+  .desktop-only{display:none}
+
+  .mobile-wrap{max-width:430px;margin:0 auto;padding-bottom:100px}
+  .mobile-header{padding:20px 20px 0;display:flex;align-items:flex-start;justify-content:space-between}
+  .brand-name{font-family:'DM Mono',monospace;font-size:12px;color:var(--text)}
+  .brand-name strong{color:var(--accent);font-weight:500}
+  .brand-sub{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+  .mobile-month{display:flex;justify-content:center;margin:10px 0 0}
+  .summary-card{margin:12px 20px;background:var(--surface);border-radius:20px;padding:20px;border:1px solid var(--border)}
+  .summary-card .total-value{font-size:38px}
+  .summary-card .bars{height:60px}
+  .cat-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .cat-pill{display:flex;align-items:center;gap:5px;background:var(--surface2);border-radius:20px;padding:5px 10px;font-size:12px;color:var(--muted)}
+  .cat-pill .dot{width:6px;height:6px;border-radius:50%}
+  .cat-pill .cat-val{font-family:'DM Mono',monospace;color:var(--text);font-size:11px}
+  .mobile-add{margin:0 20px 20px;background:var(--surface);border-radius:20px;padding:18px;border:1px solid var(--border)}
+  .mobile-entries{padding:0 20px;display:flex;flex-direction:column;gap:7px}
+
+  /* ══════════════════════════════════
+     DESKTOP (≥ 768px)
+  ══════════════════════════════════ */
+  @media(min-width:768px){
+    .mobile-only{display:none}
+    .desktop-only{display:flex}
+
+    body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:54px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .topbar .brand-name{font-size:14px}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .brand-tag{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;border:1px solid var(--border);padding:2px 8px;border-radius:20px;margin-left:8px}
+
+    .main{display:grid;grid-template-columns:300px 1fr;flex:1;overflow:hidden}
+
+    .left-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;height:calc(100vh - 54px)}
+    .d-summary{padding:22px;border-bottom:1px solid var(--border)}
+    .d-summary .total-value{font-size:40px}
+    .d-summary .bars{height:65px}
+
+    .breakdown{padding:16px 22px;border-bottom:1px solid var(--border)}
+    .breakdown-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+    .breakdown-row:last-child{border-bottom:none}
+    .breakdown-icon{font-size:14px;width:18px;text-align:center}
+    .breakdown-name{font-size:12px;color:var(--text);flex:1}
+    .breakdown-bar-wrap{width:70px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+    .breakdown-bar{height:100%;border-radius:2px;transition:width .4s}
+    .breakdown-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:68px;text-align:right}
+
+    .d-add{padding:18px 22px;border-top:1px solid var(--border);margin-top:auto}
+
+    .right-panel{overflow-y:auto;height:calc(100vh - 54px);padding:22px}
+    .r-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .r-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+    .d-entries{display:flex;flex-direction:column;gap:6px}
+    .d-entries .entry-right{display:flex;align-items:center;gap:16px}
+    .d-entries .entry-time-col{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:80px;text-align:right}
+  }
+</style>
+</head>
+<body>
+
+<!-- Modal -->
+<div class="modal-overlay" id="setupModal" style="display:none">
+  <div class="modal">
+    <h2>Conectar ao Google Sheets</h2>
+    <p>Cole a URL do Apps Script para sincronizar seus dados entre celular e PC em tempo real.</p>
+    <input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <button class="modal-btn" onclick="saveUrl()">Conectar</button>
+    <button class="modal-skip" onclick="closeModal()">Usar só localmente por enquanto</button>
+  </div>
+</div>
+
+<!-- ══ DESKTOP LAYOUT ══ -->
+<div class="desktop-only topbar">
+  <div style="display:flex;align-items:center">
+    <div class="brand-name"><strong>Triumpho</strong> Capital</div>
+    <div class="brand-tag">despesas variáveis</div>
+  </div>
+  <div class="topbar-right">
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <div class="month-label" id="d-monthLabel">Mar 2026</div>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="sync-badge" onclick="openModal()">
+      <div class="sync-dot" id="d-syncDot"></div>
+      <span id="d-syncLabel">configurar</span>
+    </div>
+  </div>
+</div>
+
+<div class="desktop-only main">
+  <div class="left-panel">
+    <div class="d-summary">
+      <div class="total-label">Total do mês</div>
+      <div class="total-value" id="d-total"><span>R$</span> 0,00</div>
+      <div class="bars" id="d-bars" style="height:65px"><div class="bar-wrap" title="Alimentação: R$0,00"><div class="bar" style="height:0%;background:#c8f060;opacity:0.12"></div><div class="bar-label">🍽️</div></div><div class="bar-wrap" title="Compra: R$0,00"><div class="bar" style="height:0%;background:#ffb347;opacity:0.12"></div><div class="bar-label">🛍️</div></div><div class="bar-wrap" title="Lazer: R$0,00"><div class="bar" style="height:0%;background:#b47fff;opacity:0.12"></div><div class="bar-label">🎮</div></div><div class="bar-wrap" title="Transporte: R$0,00"><div class="bar" style="height:0%;background:#5cadff;opacity:0.12"></div><div class="bar-label">🚌</div></div><div class="bar-wrap" title="Mercado: R$0,00"><div class="bar" style="height:0%;background:#47ffd4;opacity:0.12"></div><div class="bar-label">🛒</div></div><div class="bar-wrap" title="Outros: R$0,00"><div class="bar" style="height:0%;background:#ff5c5c;opacity:0.12"></div><div class="bar-label">📦</div></div></div>
+    </div>
+    <div class="breakdown">
+      <div class="section-title">Por categoria</div>
+      <div id="d-breakdown"><div class="breakdown-row">
+        <span class="breakdown-icon">🍽️</span>
+        <span class="breakdown-name">Alimentação</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#c8f060;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div><div class="breakdown-row">
+        <span class="breakdown-icon">🛍️</span>
+        <span class="breakdown-name">Compra</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#ffb347;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div><div class="breakdown-row">
+        <span class="breakdown-icon">🎮</span>
+        <span class="breakdown-name">Lazer</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#b47fff;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div><div class="breakdown-row">
+        <span class="breakdown-icon">🚌</span>
+        <span class="breakdown-name">Transporte</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#5cadff;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div><div class="breakdown-row">
+        <span class="breakdown-icon">🛒</span>
+        <span class="breakdown-name">Mercado</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#47ffd4;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div><div class="breakdown-row">
+        <span class="breakdown-icon">📦</span>
+        <span class="breakdown-name">Outros</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:0%;background:#ff5c5c;opacity:0.2"></div></div>
+        <span class="breakdown-val" style="color:var(--muted)">R$ 0,00</span></div></div>
+    </div>
+    <div class="d-add">
+      <div class="section-title">Lançar gasto</div>
+      <div class="value-wrap">
+        <span class="value-prefix">R$</span>
+        <input type="text" class="input-value" id="d-value" placeholder="0,00" inputmode="numeric">
+      </div>
+      <input type="text" class="input-desc" id="d-desc" placeholder="Descrição (ex: almoço, camiseta, uber...)">
+      <div class="cat-buttons" id="d-cats"><button class="cat-btn"><span class="icon">🍽️</span><span class="label">Alimentação</span></button><button class="cat-btn"><span class="icon">🛍️</span><span class="label">Compra</span></button><button class="cat-btn"><span class="icon">🎮</span><span class="label">Lazer</span></button><button class="cat-btn"><span class="icon">🚌</span><span class="label">Transporte</span></button><button class="cat-btn"><span class="icon">🛒</span><span class="label">Mercado</span></button><button class="cat-btn"><span class="icon">📦</span><span class="label">Outros</span></button></div>
+      <button class="add-btn" id="d-addBtn" onclick="addEntry()" disabled="">Adicionar</button>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="r-header">
+      <div class="section-title" style="margin:0">Lançamentos</div>
+      <div class="r-count" id="d-count">0 lançamentos</div>
+    </div>
+    <div class="d-entries" id="d-list"><div class="empty"><div class="big">💸</div>Nenhum gasto lançado<br>nesse mês ainda.</div></div>
+  </div>
+</div>
+
+<!-- ══ MOBILE LAYOUT ══ -->
+<div class="mobile-only mobile-wrap">
+  <div class="mobile-header">
+    <div>
+      <div class="brand-name"><strong>Triumpho</strong> Capital</div>
+      <div class="brand-sub">despesas variáveis</div>
+    </div>
+    <div class="sync-badge" onclick="openModal()">
+      <div class="sync-dot" id="m-syncDot"></div>
+      <span id="m-syncLabel">configurar</span>
+    </div>
+  </div>
+  <div class="mobile-month">
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <div class="month-label" id="m-monthLabel">Mar 2026</div>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="total-label">Total do mês</div>
+    <div class="total-value" id="m-total"><span>R$</span> 0,00</div>
+    <div class="bars" id="m-bars" style="height:60px"><div class="bar-wrap" title="Alimentação: R$0,00"><div class="bar" style="height:0%;background:#c8f060;opacity:0.12"></div><div class="bar-label">🍽️</div></div><div class="bar-wrap" title="Compra: R$0,00"><div class="bar" style="height:0%;background:#ffb347;opacity:0.12"></div><div class="bar-label">🛍️</div></div><div class="bar-wrap" title="Lazer: R$0,00"><div class="bar" style="height:0%;background:#b47fff;opacity:0.12"></div><div class="bar-label">🎮</div></div><div class="bar-wrap" title="Transporte: R$0,00"><div class="bar" style="height:0%;background:#5cadff;opacity:0.12"></div><div class="bar-label">🚌</div></div><div class="bar-wrap" title="Mercado: R$0,00"><div class="bar" style="height:0%;background:#47ffd4;opacity:0.12"></div><div class="bar-label">🛒</div></div><div class="bar-wrap" title="Outros: R$0,00"><div class="bar" style="height:0%;background:#ff5c5c;opacity:0.12"></div><div class="bar-label">📦</div></div></div>
+    <div class="cat-pills" id="m-pills"></div>
+  </div>
+  <div style="padding:0 20px;margin-bottom:12px">
+    <div class="section-title">Lançar gasto</div>
+    <div class="mobile-add">
+      <div class="value-wrap">
+        <span class="value-prefix">R$</span>
+        <input type="text" class="input-value" id="m-value" placeholder="0,00" inputmode="numeric">
+      </div>
+      <input type="text" class="input-desc" id="m-desc" placeholder="Descrição (ex: almoço, camiseta, uber...)">
+      <div class="cat-buttons" id="m-cats"><button class="cat-btn"><span class="icon">🍽️</span><span class="label">Alimentação</span></button><button class="cat-btn"><span class="icon">🛍️</span><span class="label">Compra</span></button><button class="cat-btn"><span class="icon">🎮</span><span class="label">Lazer</span></button><button class="cat-btn"><span class="icon">🚌</span><span class="label">Transporte</span></button><button class="cat-btn"><span class="icon">🛒</span><span class="label">Mercado</span></button><button class="cat-btn"><span class="icon">📦</span><span class="label">Outros</span></button></div>
+      <button class="add-btn" id="m-addBtn" onclick="addEntry()" disabled="">Adicionar</button>
+    </div>
+  </div>
+  <div style="padding:0 20px;margin-bottom:10px"><div class="section-title">Lançamentos</div></div>
+  <div class="mobile-entries" id="m-list"><div class="empty"><div class="big">💸</div>Nenhum gasto lançado<br>nesse mês ainda.</div></div>
+</div>
+
+<div class="toast" id="toast">Lançado!</div>
+
+<script>
+const CATS=[
+  {id:'alimentacao',label:'Alimentação',icon:'🍽️',color:'#c8f060'},
+  {id:'compra',label:'Compra',icon:'🛍️',color:'#ffb347'},
+  {id:'lazer',label:'Lazer',icon:'🎮',color:'#b47fff'},
+  {id:'transporte',label:'Transporte',icon:'🚌',color:'#5cadff'},
+  {id:'mercado',label:'Mercado',icon:'🛒',color:'#47ffd4'},
+  {id:'outros',label:'Outros',icon:'📦',color:'#ff5c5c'},
+];
+const MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const isDesktop=()=>window.innerWidth>=768;
+
+let entries=[],selectedCat=null,viewDate=new Date(),rawCents=0;
+let SCRIPT_URL=localStorage.getItem('tc_script_url')||'';
+
+/* ── Sync status ── */
+function setSyncStatus(s){
+  ['d','m'].forEach(p=>{
+    const dot=document.getElementById(`${p}-syncDot`);
+    const lbl=document.getElementById(`${p}-syncLabel`);
+    if(!dot)return;
+    dot.className='sync-dot';
+    if(s==='ok'){dot.classList.add('ok');lbl.textContent='sincronizado'}
+    else if(s==='err'){dot.classList.add('err');lbl.textContent='erro sync'}
+    else if(s==='loading'){dot.classList.add('loading');lbl.textContent='sincronizando'}
+    else{lbl.textContent=SCRIPT_URL?'sem sync':'configurar'}
+  });
+}
+
+/* ── Modal ── */
+function openModal(){document.getElementById('setupModal').style.display='flex';document.getElementById('urlInput').value=SCRIPT_URL}
+function closeModal(){document.getElementById('setupModal').style.display='none'}
+function saveUrl(){
+  const url=document.getElementById('urlInput').value.trim();
+  if(!url)return;
+  SCRIPT_URL=url;localStorage.setItem('tc_script_url',url);closeModal();loadFromSheets();
+}
+
+/* ── Storage ── */
+function storageKey(){return`tc_gastos_${viewDate.getFullYear()}_${viewDate.getMonth()}`}
+function loadLocal(){try{const r=localStorage.getItem(storageKey());entries=r?JSON.parse(r):[];}catch(e){entries=[];}}
+function saveLocal(){try{localStorage.setItem(storageKey(),JSON.stringify(entries));}catch(e){}}
+
+async function loadFromSheets(){
+  if(!SCRIPT_URL){loadLocal();render();return}
+  setSyncStatus('loading');
+  try{
+    const res=await fetch(SCRIPT_URL);const data=await res.json();
+    if(data.ok){
+      const y=viewDate.getFullYear(),m=viewDate.getMonth();
+      entries=data.entries
+        .filter(e=>{const d=new Date(e.time);return d.getFullYear()===y&&d.getMonth()===m})
+        .sort((a,b)=>new Date(b.time)-new Date(a.time));
+      saveLocal();setSyncStatus('ok');
+    }else throw new Error(data.error);
+  }catch(err){setSyncStatus('err');loadLocal();showToast('Usando dados locais');}
+  render();
+}
+
+async function pushAdd(entry){if(!SCRIPT_URL)return;try{await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'add',entry})});}catch(e){}}
+async function pushDelete(id){if(!SCRIPT_URL)return;try{await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',id:String(id)})});}catch(e){}}
+
+function changeMonth(dir){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+dir,1);loadFromSheets();}
+
+/* ── Currency mask (works for both inputs) ── */
+function attachMask(inputId,btnId){
+  const inp=document.getElementById(inputId);
+  if(!inp)return;
+  inp.addEventListener('input',function(){
+    let digits=this.value.replace(/\D/g,'');
+    if(!digits){rawCents=0;this.value='';checkBtn();return}
+    rawCents=parseInt(digits,10);
+    this.value=Math.floor(rawCents/100).toLocaleString('pt-BR')+','+String(rawCents%100).padStart(2,'0');
+    checkBtn();
+  });
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!document.getElementById(btnId).disabled)addEntry();});
+}
+
+function getActiveDescId(){return isDesktop()?'d-desc':'m-desc'}
+function getActiveValueId(){return isDesktop()?'d-value':'m-value'}
+
+function checkBtn(){
+  const ok=rawCents>0&&selectedCat;
+  ['d-addBtn','m-addBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=!ok;});
+}
+
+/* ── Cat buttons ── */
+function buildCats(containerId){
+  const wrap=document.getElementById(containerId);if(!wrap)return;
+  wrap.innerHTML='';
+  CATS.forEach(c=>{
+    const btn=document.createElement('button');btn.className='cat-btn'+(selectedCat===c.id?' selected':'');
+    btn.innerHTML=`<span class="icon">${c.icon}</span><span class="label">${c.label}</span>`;
+    btn.onclick=()=>{selectedCat=selectedCat===c.id?null:c.id;buildCats('d-cats');buildCats('m-cats');checkBtn();};
+    wrap.appendChild(btn);
+  });
+}
+
+/* ── Add entry ── */
+async function addEntry(){
+  if(!rawCents||!selectedCat)return;
+  const descId=getActiveDescId(),valId=getActiveValueId();
+  const entry={id:Date.now(),cat:selectedCat,value:rawCents/100,desc:document.getElementById(descId).value.trim(),time:new Date().toISOString()};
+  entries.unshift(entry);saveLocal();
+  document.getElementById(valId).value='';rawCents=0;
+  document.getElementById(descId).value='';
+  // also clear the other input
+  const otherId=descId==='d-desc'?'m-desc':'d-desc';
+  const otherValId=valId==='d-value'?'m-value':'d-value';
+  if(document.getElementById(otherId))document.getElementById(otherId).value='';
+  if(document.getElementById(otherValId))document.getElementById(otherValId).value='';
+  selectedCat=null;buildCats('d-cats');buildCats('m-cats');checkBtn();render();showToast('Lançado!');
+  setSyncStatus('loading');await pushAdd(entry);setSyncStatus(SCRIPT_URL?'ok':'');
+}
+
+async function deleteEntry(id){entries=entries.filter(e=>e.id!==id);saveLocal();render();await pushDelete(id);}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* ── Helpers ── */
+function fmt(v){return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtTime(iso){
+  const d=new Date(iso);
+  return`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+/* ── Shared render helpers ── */
+function getCatTotals(){
+  const t={};CATS.forEach(c=>t[c.id]=0);
+  entries.forEach(e=>{if(t[e.cat]!==undefined)t[e.cat]+=Number(e.value);});
+  return t;
+}
+
+function renderBars(containerId,height){
+  const el=document.getElementById(containerId);if(!el)return;
+  const totals=getCatTotals();
+  const maxV=Math.max(...CATS.map(c=>totals[c.id]),1);
+  el.innerHTML='';el.style.height=height;
+  CATS.forEach(c=>{
+    const pct=(totals[c.id]/maxV)*100;
+    const w=document.createElement('div');w.className='bar-wrap';
+    w.title=`${c.label}: R$${fmt(totals[c.id])}`;
+    w.innerHTML=`<div class="bar" style="height:${Math.max(pct,0)}%;background:${c.color};opacity:${totals[c.id]>0?1:0.12}"></div><div class="bar-label">${c.icon}</div>`;
+    el.appendChild(w);
+  });
+}
+
+function renderEntryEl(e,desktopMode){
+  const cat=CATS.find(c=>c.id===e.cat)||CATS[5];
+  const el=document.createElement('div');el.className='entry';
+  if(desktopMode){
+    el.innerHTML=`
+      <div class="entry-icon">${cat.icon}</div>
+      <div class="entry-info">
+        <div class="entry-cat">${cat.label}</div>
+        <div class="entry-desc">${e.desc||'—'}</div>
+      </div>
+      <div class="entry-right">
+        <div class="entry-time-col">${fmtTime(e.time)}</div>
+        <div class="entry-val" style="color:${cat.color}">R$ ${fmt(Number(e.value))}</div>
+        <button class="entry-delete" onclick="deleteEntry(${e.id})">×</button>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div class="entry-icon">${cat.icon}</div>
+      <div class="entry-info">
+        <div class="entry-cat">${cat.label}</div>
+        <div class="entry-desc">${e.desc||'—'}</div>
+      </div>
+      <div class="entry-right">
+        <div class="entry-val" style="color:${cat.color}">R$ ${fmt(Number(e.value))}</div>
+        <div class="entry-time">${fmtTime(e.time)}</div>
+      </div>
+      <button class="entry-delete" onclick="deleteEntry(${e.id})">×</button>`;
+  }
+  return el;
+}
+
+/* ── Main render ── */
+function render(){
+  const total=entries.reduce((s,e)=>s+Number(e.value),0);
+  const totals=getCatTotals();
+  const monthStr=`${MONTHS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
+  const totalStr=`<span>R$</span> ${fmt(total)}`;
+
+  // desktop
+  const dm=document.getElementById('d-monthLabel');if(dm)dm.textContent=monthStr;
+  const dt=document.getElementById('d-total');if(dt)dt.innerHTML=totalStr;
+  renderBars('d-bars','65px');
+  const dc=document.getElementById('d-count');if(dc)dc.textContent=`${entries.length} lançamento${entries.length!==1?'s':''}`;
+
+  // breakdown (desktop only)
+  const bd=document.getElementById('d-breakdown');
+  if(bd){
+    bd.innerHTML='';
+    const maxBd=Math.max(...CATS.map(c=>totals[c.id]),1);
+    CATS.forEach(c=>{
+      const pct=Math.round((totals[c.id]/maxBd)*100);
+      const row=document.createElement('div');row.className='breakdown-row';
+      row.innerHTML=`
+        <span class="breakdown-icon">${c.icon}</span>
+        <span class="breakdown-name">${c.label}</span>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${pct}%;background:${c.color};opacity:${totals[c.id]>0?1:0.2}"></div></div>
+        <span class="breakdown-val" style="color:${totals[c.id]>0?c.color:'var(--muted)'}">R$ ${fmt(totals[c.id])}</span>`;
+      bd.appendChild(row);
+    });
+  }
+
+  // desktop entries
+  const dl=document.getElementById('d-list');
+  if(dl){
+    dl.innerHTML='';
+    if(!entries.length){dl.innerHTML=`<div class="empty"><div class="big">💸</div>Nenhum gasto lançado<br>nesse mês ainda.</div>`;}
+    else entries.forEach(e=>dl.appendChild(renderEntryEl(e,true)));
+  }
+
+  // mobile
+  const mm=document.getElementById('m-monthLabel');if(mm)mm.textContent=monthStr;
+  const mt=document.getElementById('m-total');if(mt)mt.innerHTML=totalStr;
+  renderBars('m-bars','60px');
+
+  // pills (mobile)
+  const pills=document.getElementById('m-pills');
+  if(pills){
+    pills.innerHTML='';
+    CATS.filter(c=>totals[c.id]>0).forEach(c=>{
+      const p=document.createElement('div');p.className='cat-pill';
+      p.innerHTML=`<div class="dot" style="background:${c.color}"></div>${c.icon} ${c.label} <span class="cat-val">R$${fmt(totals[c.id])}</span>`;
+      pills.appendChild(p);
+    });
+  }
+
+  // mobile entries
+  const ml=document.getElementById('m-list');
+  if(ml){
+    ml.innerHTML='';
+    if(!entries.length){ml.innerHTML=`<div class="empty"><div class="big">💸</div>Nenhum gasto lançado<br>nesse mês ainda.</div>`;}
+    else entries.forEach(e=>ml.appendChild(renderEntryEl(e,false)));
+  }
+}
+
+/* ── Init ── */
+attachMask('d-value','d-addBtn');
+attachMask('m-value','m-addBtn');
+document.getElementById('d-desc')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('d-addBtn').disabled)addEntry();});
+document.getElementById('m-desc')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('m-addBtn').disabled)addEntry();});
+
+buildCats('d-cats');buildCats('m-cats');
+
+if(!SCRIPT_URL){
+  loadLocal();render();setSyncStatus('');
+  if(!localStorage.getItem('tc_seen_modal')){localStorage.setItem('tc_seen_modal','1');setTimeout(()=>openModal(),600);}
+}else{loadFromSheets();}
+</script>
+
+
+</body></html>
